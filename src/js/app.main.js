@@ -40,12 +40,11 @@ function setup() {
 
 function addEventHandler() {
     document.addEventListener("keydown", (e) => {
-        e.preventDefault();
         switch (e.code) {
-        case "ArrowUp" : block.rotate(); break;
-        case "ArrowDown" : block.rotate(); break;
-        case "ArrowLeft" : block.left(); break;
-        case "ArrowRight" : block.right(); break;
+        case "ArrowUp" : block.rotate(); e.preventDefault(); break;
+        case "ArrowDown" : block.rotate(); e.preventDefault(); break;
+        case "ArrowLeft" : block.left(); e.preventDefault(); break;
+        case "ArrowRight" : block.right(); e.preventDefault(); break;
         default : console.log("not defiend event key"); break;
         }
     });
@@ -80,14 +79,39 @@ function draw() {
             ctx.closePath();
         }
     }
+
     if (!stop) {
         block.update();
     } else {
         cells = cellImg.slice();
+        checkClear();
         initBlock();
     }
 
     setTimeout(draw, 200);
+}
+
+function checkClear() {
+    const clearArr = [];
+    for (let y = 0; y < rows; y += 1) {
+        let isClear = true;
+        for (let x = 0; x < cols; x += 1) {
+            isClear = isClear && cells[(y * cols) + x] !== 0;
+        }
+        if (isClear) clearArr.push(y);
+    }
+
+    for (let i = 0; i < clearArr.length; i += 1) {
+        const row = clearArr[i];
+        const firstCell = row * cols;
+        const lastCell = (row + 1) * cols;
+        cells = cells.slice(0, firstCell).concat(cells.slice(lastCell, cells.length));
+        const blankArr = [];
+        for (let k = 0; k < cols; k += 1) {
+            blankArr.push(0);
+        }
+        cells = blankArr.concat(cells);
+    }
 }
 
 function getCellIdx($blockX, $blockY, $cellIdx) {

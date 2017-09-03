@@ -237,11 +237,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 /* global cols */
 
-var COLOR_TYPE = ["#000", "#f00", "#0f0", "#00f"];
+var COLOR_TYPE = ["#000", "#f00", "#0f0", "#00f", "#f0f", "#ff0"];
 
 var BLOCK_TYPE = {
     TYPE1: [[0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0]],
-    TYPE2: [[0, 0, 2, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 0, 0], [0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0]]
+    TYPE2: [[0, 0, 2, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 0, 0], [0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0]],
+    TYPE3: [[0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 0, 0, 0, 0, 0]],
+    TYPE4: [[0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0], [0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0]],
+    TYPE5: [[0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 5, 0, 0, 0, 5, 0], [0, 0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 0], [0, 5, 0, 0, 0, 5, 5, 0, 0, 0, 5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 0, 0]]
 };
 
 var Block = function () {
@@ -251,40 +254,49 @@ var Block = function () {
         this.x = 0;
         this.y = 0;
         this.rotateIdx = 0;
-        this.cells = BLOCK_TYPE.TYPE2[0];
         this.rotateType = 0;
-        this.blockType = 1;
+        this.blockType = Math.floor(Math.random() * 5) + 1;
+        this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
     }
 
     _createClass(Block, [{
         key: "rotate",
         value: function rotate() {
+            var _this = this;
+
             this.rotateIdx = (this.rotateIdx + 1) % 4;
-            this.cells = BLOCK_TYPE.TYPE2[this.rotateIdx];
+            this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
+
+            var rightOver = false;
+            var leftOver = false;
+            while (!rightOver || !leftOver) {
+                leftOver = this.cells.reduce(function (p, c, i) {
+                    return p && !(c !== 0 && _this.x + i % 4 === cols);
+                }, true);
+                rightOver = this.cells.reduce(function (p, c, i) {
+                    return p && !(c !== 0 && _this.x + i % 4 === -1);
+                }, true);
+                if (!leftOver) this.x -= 1;
+                if (!rightOver) this.x += 1;
+            }
         }
     }, {
         key: "right",
         value: function right() {
-            var _this = this;
+            var _this2 = this;
 
             var able = this.cells.reduce(function (p, c, i) {
-                // console.log(this.x+this.y*cols+Math.floor(i/4)+(i%4));
-                // 오른쪽 벽에 붙으면 더이상 가지않음 
-                // if( c !== 0 && this.x + (i % 4) > cols) 
-                return p && !(c !== 0 && _this.x + i % 4 === cols - 1);
+                return p && !(c !== 0 && _this2.x + i % 4 === cols - 1);
             }, true);
             if (able) this.x += 1;
         }
     }, {
         key: "left",
         value: function left() {
-            var _this2 = this;
+            var _this3 = this;
 
             var able = this.cells.reduce(function (p, c, i) {
-                // console.log(this.x+this.y*cols+Math.floor(i/4)+(i%4));
-                // 오른쪽 벽에 붙으면 더이상 가지않음 
-                // if( c !== 0 && this.x + (i % 4) > cols) 
-                return p && !(c !== 0 && _this2.x + i % 4 === 0);
+                return p && !(c !== 0 && _this3.x + i % 4 === 0);
             }, true);
             if (able) this.x -= 1;
         }
@@ -339,16 +351,15 @@ function setup() {
 
 function addEventHandler() {
     document.addEventListener("keydown", function (e) {
-        e.preventDefault();
         switch (e.code) {
             case "ArrowUp":
-                block.rotate();break;
+                block.rotate();e.preventDefault();break;
             case "ArrowDown":
-                block.rotate();break;
+                block.rotate();e.preventDefault();break;
             case "ArrowLeft":
-                block.left();break;
+                block.left();e.preventDefault();break;
             case "ArrowRight":
-                block.right();break;
+                block.right();e.preventDefault();break;
             default:
                 console.log("not defiend event key");break;
         }
@@ -382,14 +393,39 @@ function draw() {
             ctx.closePath();
         }
     }
+
     if (!stop) {
         block.update();
     } else {
         cells = cellImg.slice();
+        checkClear();
         initBlock();
     }
 
     setTimeout(draw, 200);
+}
+
+function checkClear() {
+    var clearArr = [];
+    for (var y = 0; y < rows; y += 1) {
+        var isClear = true;
+        for (var x = 0; x < cols; x += 1) {
+            isClear = isClear && cells[y * cols + x] !== 0;
+        }
+        if (isClear) clearArr.push(y);
+    }
+
+    for (var i = 0; i < clearArr.length; i += 1) {
+        var row = clearArr[i];
+        var firstCell = row * cols;
+        var lastCell = (row + 1) * cols;
+        cells = cells.slice(0, firstCell).concat(cells.slice(lastCell, cells.length));
+        var blankArr = [];
+        for (var k = 0; k < cols; k += 1) {
+            blankArr.push(0);
+        }
+        cells = blankArr.concat(cells);
+    }
 }
 
 function getCellIdx($blockX, $blockY, $cellIdx) {
