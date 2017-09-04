@@ -1,4 +1,4 @@
-/* global cols */
+/* global cols rows absCells */
 
 const COLOR_TYPE = [
     "#000",
@@ -129,33 +129,59 @@ class Block {
         this.rotateType = 0;
         this.blockType = Math.floor(Math.random() * 5) + 1;
         this.cells = BLOCK_TYPE[`TYPE${this.blockType}`][this.rotateIdx];
+
+        this.getCellIdx = ($blockX, $blockY, $cellIdx) =>  $blockX + ($blockY * cols) + (Math.floor($cellIdx / 4) * cols) + ($cellIdx % 4)
     }
 
+    // 돌리고 -> 불가능하면 위치조정
     rotate() {
         this.rotateIdx = (this.rotateIdx + 1) % 4;
         this.cells = BLOCK_TYPE[`TYPE${this.blockType}`][this.rotateIdx];
-
-        let rightOver = false;
-        let leftOver = false;
-        while (!rightOver || !leftOver ) {
-            leftOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === cols), true);
-            rightOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === -1), true);
-            if (!leftOver) this.x -= 1;
-            if (!rightOver) this.x += 1;
-        }
-    }
-
-    right() {
-        const able = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === cols - 1), true);
-        if (able) this.x += 1;
+        this.correction();
     }
 
     left() {
-        const able = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === 0), true);
-        if (able) this.x -= 1;
+        if (!this.simulrateMove(true)) return;
+        this.x -= 1;
+        this.correction();
     }
 
-    update() {
+    right() {
+        if (!this.simulrateMove(false)) return;
+        this.x += 1;
+        this.correction();
+    }
+
+    down() {
         this.y += 1;
+        this.correction();
+    }
+
+    // 영역 보정
+    correction() {
+        let rightOver = false;
+        let leftOver = false;
+        let downOver = true;
+        while (!rightOver || !leftOver || !downOver) {
+            leftOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === cols), true);
+            rightOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === -1), true);
+            // downOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.y + Math.floor(i / 4) >= rows), true);
+            console.log(downOver, this.y);
+            if (!leftOver) this.x -= 1;
+            if (!rightOver) this.x += 1;
+            // if (!downOver) this.y -= 1;
+        }
+    }
+
+    simulrateMove($left) {
+        let able = true;
+        const nextX = $left ? this.x - 1 : this.x + 1;
+        for (let i = 0; i < this.cells.length; i += 1) {
+            const mapCellIdx = this.getCellIdx(nextX, this.y, i);
+            if (absCells[mapCellIdx] !== 0 &&
+                this.cells[i] !== 0) able = false;
+        }
+
+        return able;
     }
 }

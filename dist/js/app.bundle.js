@@ -235,7 +235,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/* global cols */
+/* global cols rows absCells */
 
 var COLOR_TYPE = ["#000", "#f00", "#0f0", "#00f", "#f0f", "#ff0"];
 
@@ -257,53 +257,78 @@ var Block = function () {
         this.rotateType = 0;
         this.blockType = Math.floor(Math.random() * 5) + 1;
         this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
+
+        this.getCellIdx = function ($blockX, $blockY, $cellIdx) {
+            return $blockX + $blockY * cols + Math.floor($cellIdx / 4) * cols + $cellIdx % 4;
+        };
     }
+
+    // 돌리고 -> 불가능하면 위치조정
+
 
     _createClass(Block, [{
         key: "rotate",
         value: function rotate() {
-            var _this = this;
-
             this.rotateIdx = (this.rotateIdx + 1) % 4;
             this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
+            this.correction();
+        }
+    }, {
+        key: "left",
+        value: function left() {
+            if (!this.simulrateMove(true)) return;
+            this.x -= 1;
+            this.correction();
+        }
+    }, {
+        key: "right",
+        value: function right() {
+            if (!this.simulrateMove(false)) return;
+            this.x += 1;
+            this.correction();
+        }
+    }, {
+        key: "down",
+        value: function down() {
+            this.y += 1;
+            this.correction();
+        }
+
+        // 영역 보정
+
+    }, {
+        key: "correction",
+        value: function correction() {
+            var _this = this;
 
             var rightOver = false;
             var leftOver = false;
-            while (!rightOver || !leftOver) {
+            var downOver = true;
+            while (!rightOver || !leftOver || !downOver) {
                 leftOver = this.cells.reduce(function (p, c, i) {
                     return p && !(c !== 0 && _this.x + i % 4 === cols);
                 }, true);
                 rightOver = this.cells.reduce(function (p, c, i) {
                     return p && !(c !== 0 && _this.x + i % 4 === -1);
                 }, true);
+                // downOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.y + Math.floor(i / 4) >= rows), true);
+                console.log(downOver, this.y);
                 if (!leftOver) this.x -= 1;
                 if (!rightOver) this.x += 1;
+                // if (!downOver) this.y -= 1;
             }
         }
     }, {
-        key: "right",
-        value: function right() {
-            var _this2 = this;
+        key: "simulrateMove",
+        value: function simulrateMove($left) {
+            var able = true;
+            var nextX = $left ? this.x - 1 : this.x + 1;
+            for (var i = 0; i < this.cells.length; i += 1) {
+                var mapCellIdx = this.getCellIdx(nextX, this.y, i);
+                if (absCells[mapCellIdx] !== 0 && this.cells[i] !== 0) able = false;
+            }
 
-            var able = this.cells.reduce(function (p, c, i) {
-                return p && !(c !== 0 && _this2.x + i % 4 === cols - 1);
-            }, true);
-            if (able) this.x += 1;
-        }
-    }, {
-        key: "left",
-        value: function left() {
-            var _this3 = this;
-
-            var able = this.cells.reduce(function (p, c, i) {
-                return p && !(c !== 0 && _this3.x + i % 4 === 0);
-            }, true);
-            if (able) this.x -= 1;
-        }
-    }, {
-        key: "update",
-        value: function update() {
-            this.y += 1;
+            return able;
         }
     }]);
 
@@ -313,12 +338,13 @@ var Block = function () {
 
 /* global BLOCK_TYPE COLOR_TYPE Block */
 
-var STAGE_WIDTH = 360;
-var STAGE_HEIGHT = 600;
+var STAGE_WIDTH = 240;
+var STAGE_HEIGHT = 460;
 var scl = 20;
 var rows = STAGE_HEIGHT / scl;
 var cols = STAGE_WIDTH / scl;
 var cells = [];
+var absCells = [];
 
 var canvas = void 0;
 var ctx = void 0;
@@ -328,6 +354,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("ready");
     setup();
     addEventHandler();
+    update();
     draw();
 });
 
@@ -343,6 +370,7 @@ function setup() {
     for (var y = 0; y < rows; y += 1) {
         for (var x = 0; x < cols; x += 1) {
             cells.push(0);
+            absCells.push(0);
         }
     }
 
@@ -353,13 +381,17 @@ function addEventHandler() {
     document.addEventListener("keydown", function (e) {
         switch (e.code) {
             case "ArrowUp":
-                block.rotate();e.preventDefault();break;
+                block.rotate();maping();e.preventDefault();break;
             case "ArrowDown":
-                block.rotate();e.preventDefault();break;
+                block.down();maping();e.preventDefault();break;
             case "ArrowLeft":
-                block.left();e.preventDefault();break;
+                block.left();
+                maping();
+                e.preventDefault();break;
             case "ArrowRight":
-                block.right();e.preventDefault();break;
+                block.right();
+                maping();
+                e.preventDefault();break;
             default:
                 console.log("not defiend event key");break;
         }
@@ -371,19 +403,10 @@ function draw() {
     ctx.rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     ctx.fill();
 
-    var cellImg = cells.slice();
-
-    var stop = false;
-    for (var i = 0; i < block.cells.length; i += 1) {
-        var mapCellIdx = getCellIdx(block.x, block.y, i);
-        cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
-
-        if (block.cells[i] !== 0 && cellImg[mapCellIdx + cols] !== 0) stop = true;
-    }
-
+    // 셀을 그린다 .
     for (var y = 0; y < rows; y += 1) {
         for (var x = 0; x < cols; x += 1) {
-            var cellType = cellImg[x + y * cols];
+            var cellType = cells[x + y * cols];
             ctx.beginPath();
             ctx.rect(x * scl, y * scl, scl, scl);
             ctx.strokeStyle = cellType === 0 ? "#fff" : "#000";
@@ -394,15 +417,31 @@ function draw() {
         }
     }
 
-    if (!stop) {
-        block.update();
-    } else {
-        cells = cellImg.slice();
+    setTimeout(draw, 40);
+}
+
+function update() {
+    block.down();
+    maping();
+
+    setTimeout(update, 600);
+}
+
+function maping() {
+    var stop = false;
+    var cellImg = absCells.slice();
+    for (var i = 0; i < block.cells.length; i += 1) {
+        var mapCellIdx = getCellIdx(block.x, block.y, i);
+        cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
+
+        if (block.cells[i] !== 0 && cellImg[mapCellIdx + cols] !== 0) stop = true;
+    }
+    if (stop) {
+        absCells = cellImg.slice();
         checkClear();
         initBlock();
     }
-
-    setTimeout(draw, 200);
+    cells = cellImg.slice();
 }
 
 function checkClear() {
@@ -410,7 +449,7 @@ function checkClear() {
     for (var y = 0; y < rows; y += 1) {
         var isClear = true;
         for (var x = 0; x < cols; x += 1) {
-            isClear = isClear && cells[y * cols + x] !== 0;
+            isClear = isClear && absCells[y * cols + x] !== 0;
         }
         if (isClear) clearArr.push(y);
     }
@@ -419,12 +458,12 @@ function checkClear() {
         var row = clearArr[i];
         var firstCell = row * cols;
         var lastCell = (row + 1) * cols;
-        cells = cells.slice(0, firstCell).concat(cells.slice(lastCell, cells.length));
+        absCells = absCells.slice(0, firstCell).concat(absCells.slice(lastCell, absCells.length));
         var blankArr = [];
         for (var k = 0; k < cols; k += 1) {
             blankArr.push(0);
         }
-        cells = blankArr.concat(cells);
+        absCells = blankArr.concat(absCells);
     }
 }
 

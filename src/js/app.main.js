@@ -1,12 +1,13 @@
 /* global BLOCK_TYPE COLOR_TYPE Block */
 
 
-const STAGE_WIDTH = 360;
-const STAGE_HEIGHT = 600;
+const STAGE_WIDTH = 240;
+const STAGE_HEIGHT = 460;
 const scl = 20;
 const rows = STAGE_HEIGHT / scl;
 const cols = STAGE_WIDTH / scl;
 let cells = [];
+let absCells = [];
 
 
 let canvas;
@@ -17,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("ready");
     setup();
     addEventHandler();
+    update();
     draw();
 });
 
@@ -32,6 +34,7 @@ function setup() {
     for (let y = 0; y < rows; y += 1) {
         for (let x = 0; x < cols; x += 1) {
             cells.push(0);
+            absCells.push(0);
         }
     }
 
@@ -41,10 +44,16 @@ function setup() {
 function addEventHandler() {
     document.addEventListener("keydown", (e) => {
         switch (e.code) {
-        case "ArrowUp" : block.rotate(); e.preventDefault(); break;
-        case "ArrowDown" : block.rotate(); e.preventDefault(); break;
-        case "ArrowLeft" : block.left(); e.preventDefault(); break;
-        case "ArrowRight" : block.right(); e.preventDefault(); break;
+        case "ArrowUp" : block.rotate(); maping(); e.preventDefault(); break;
+        case "ArrowDown" : block.down(); maping(); e.preventDefault(); break;
+        case "ArrowLeft" :
+            block.left();
+            maping();
+            e.preventDefault();break;
+        case "ArrowRight" :
+            block.right();
+            maping();
+            e.preventDefault(); break;
         default : console.log("not defiend event key"); break;
         }
     });
@@ -55,21 +64,10 @@ function draw() {
     ctx.rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     ctx.fill();
 
-    const cellImg = cells.slice();
-
-
-    let stop = false;
-    for (let i = 0; i < block.cells.length; i += 1) {
-        const mapCellIdx = getCellIdx(block.x, block.y, i);
-        cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
-
-        if (block.cells[i] !== 0 &&
-            cellImg[mapCellIdx + cols] !== 0) stop = true;
-    }
-
+    // 셀을 그린다 .
     for (let y = 0; y < rows; y += 1) {
         for (let x = 0; x < cols; x += 1) {
-            const cellType = cellImg[x + (y * cols)];
+            const cellType = cells[x + (y * cols)];
             ctx.beginPath();
             ctx.rect(x * scl, y * scl, scl, scl);
             ctx.strokeStyle = cellType === 0 ? "#fff" : "#000";
@@ -80,23 +78,41 @@ function draw() {
         }
     }
 
-    if (!stop) {
-        block.update();
-    } else {
-        cells = cellImg.slice();
+    setTimeout(draw, 40);
+}
+
+function update() {
+    block.down();
+    maping();
+
+    setTimeout(update, 600);
+}
+
+function maping() {
+    let stop = false;
+    const cellImg = absCells.slice();
+    for (let i = 0; i < block.cells.length; i += 1) {
+        const mapCellIdx = getCellIdx(block.x, block.y, i);
+        cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
+
+        if (block.cells[i] !== 0 &&
+             cellImg[mapCellIdx + cols] !== 0) stop = true;
+    }
+    if (stop) {
+        absCells = cellImg.slice();
         checkClear();
         initBlock();
     }
-
-    setTimeout(draw, 200);
+    cells = cellImg.slice();
 }
+
 
 function checkClear() {
     const clearArr = [];
     for (let y = 0; y < rows; y += 1) {
         let isClear = true;
         for (let x = 0; x < cols; x += 1) {
-            isClear = isClear && cells[(y * cols) + x] !== 0;
+            isClear = isClear && absCells[(y * cols) + x] !== 0;
         }
         if (isClear) clearArr.push(y);
     }
@@ -105,12 +121,12 @@ function checkClear() {
         const row = clearArr[i];
         const firstCell = row * cols;
         const lastCell = (row + 1) * cols;
-        cells = cells.slice(0, firstCell).concat(cells.slice(lastCell, cells.length));
+        absCells = absCells.slice(0, firstCell).concat(absCells.slice(lastCell, absCells.length));
         const blankArr = [];
         for (let k = 0; k < cols; k += 1) {
             blankArr.push(0);
         }
-        cells = blankArr.concat(cells);
+        absCells = blankArr.concat(absCells);
     }
 }
 
