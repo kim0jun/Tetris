@@ -6,7 +6,9 @@ const COLOR_TYPE = [
     "#0f0",
     "#00f",
     "#f0f",
-    "#ff0"];
+    "#ff0",
+    "#0ff",
+    "#3f7"];
 
 const BLOCK_TYPE = {
     TYPE1: [
@@ -119,13 +121,57 @@ const BLOCK_TYPE = {
             5, 5, 0, 0,
             0, 0, 0, 0],
     ],
+    TYPE6: [
+        [
+            0, 0, 0, 0,
+            0, 0, 6, 0,
+            0, 6, 6, 0,
+            0, 6, 0, 0],
+        [
+            0, 0, 0, 0,
+            0, 6, 6, 0,
+            0, 0, 6, 6,
+            0, 0, 0, 0],
+        [
+            0, 0, 6, 0,
+            0, 6, 6, 0,
+            0, 6, 0, 0,
+            0, 0, 0, 0],
+        [
+            0, 0, 0, 0,
+            6, 6, 0, 0,
+            0, 6, 6, 0,
+            0, 0, 0, 0],
+    ],
+    TYPE7: [
+        [
+            0, 0, 0, 0,
+            0, 0, 7, 0,
+            0, 0, 7, 7,
+            0, 0, 7, 0],
+        [
+            0, 0, 0, 0,
+            0, 0, 7, 0,
+            0, 7, 7, 7,
+            0, 0, 0, 0],
+        [
+            0, 0, 0, 0,
+            0, 0, 7, 0,
+            0, 7, 7, 0,
+            0, 0, 7, 0],
+        [
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 7, 7, 7,
+            0, 0, 7, 0],
+    ]
 };
 
 class Block {
     constructor(x, y, blockType, rotateIdx) {
         this.x = x || 0;
         this.y = y || 0;
-        this.blockType = blockType || Math.floor(Math.random() * 5) + 1;
+        this.blockType = blockType || Math.floor(Math.random() * 7) + 1;
         this.rotateIdx = rotateIdx || 0;
         this.cells = BLOCK_TYPE[`TYPE${this.blockType}`][this.rotateIdx];
 
