@@ -13,6 +13,7 @@ let absCells = [];
 let canvas;
 let ctx;
 let block;
+let previewBlock;
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("ready");
@@ -38,7 +39,7 @@ function setup() {
         }
     }
 
-    block = new Block();
+    initBlock();
 }
 
 function addEventHandler() {
@@ -49,12 +50,16 @@ function addEventHandler() {
         case "ArrowLeft" :
             block.left();
             maping();
-            e.preventDefault();break;
+            e.preventDefault(); break;
         case "ArrowRight" :
             block.right();
             maping();
             e.preventDefault(); break;
-        default : console.log("not defiend event key"); break;
+        case "Space" :
+            forceLand();
+            maping();
+            e.preventDefault(); break;
+        default : console.log(`not defiend event key : ${e.code}`); break;
         }
     });
 }
@@ -78,6 +83,8 @@ function draw() {
         }
     }
 
+    preview();
+
     setTimeout(draw, 40);
 }
 
@@ -93,17 +100,50 @@ function maping() {
     const cellImg = absCells.slice();
     for (let i = 0; i < block.cells.length; i += 1) {
         const mapCellIdx = getCellIdx(block.x, block.y, i);
-        cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
 
         if (block.cells[i] !== 0 &&
-             cellImg[mapCellIdx + cols] !== 0) stop = true;
+            cellImg[mapCellIdx + cols] !== 0) stop = true;
+
+        if (mapCellIdx < cells.length) cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
     }
     if (stop) {
         absCells = cellImg.slice();
         checkClear();
         initBlock();
+    } else {
+        cells = cellImg.slice();
     }
-    cells = cellImg.slice();
+}
+
+function preview() {
+    if (!previewBlock) return;
+    previewBlock.copyPosition(block);
+    let stop = false;
+    while (!stop) {
+        previewBlock.down();
+        for (let i = 0; i < previewBlock.cells.length; i += 1) {
+            const mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, i);
+            if (previewBlock.cells[i] !== 0 &&
+                absCells[mapCellIdx + cols] !== 0) stop = true;
+        }
+    }
+
+    for (let i = 0; i < previewBlock.cells.length; i += 1) {
+        const mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, i);
+        if (previewBlock.cells[i] !== 0) {
+            ctx.beginPath();
+            ctx.rect((mapCellIdx % cols) * scl, Math.floor(mapCellIdx / cols) * scl, scl, scl);
+            ctx.strokeStyle = "#000";
+            ctx.fillStyle = "#ddd";
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+        }
+    }
+}
+
+function forceLand() {
+    block.copyPosition(previewBlock);
 }
 
 
@@ -137,4 +177,5 @@ function getCellIdx($blockX, $blockY, $cellIdx) {
 
 function initBlock() {
     block = new Block();
+    previewBlock = new Block(block.x, block.y, block.blockType, block.rotateIdx);
 }

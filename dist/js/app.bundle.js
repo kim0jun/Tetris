@@ -248,14 +248,13 @@ var BLOCK_TYPE = {
 };
 
 var Block = function () {
-    function Block() {
+    function Block(x, y, blockType, rotateIdx) {
         _classCallCheck(this, Block);
 
-        this.x = 0;
-        this.y = 0;
-        this.rotateIdx = 0;
-        this.rotateType = 0;
-        this.blockType = Math.floor(Math.random() * 5) + 1;
+        this.x = x || 0;
+        this.y = y || 0;
+        this.blockType = blockType || Math.floor(Math.random() * 5) + 1;
+        this.rotateIdx = rotateIdx || 0;
         this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
 
         this.getCellIdx = function ($blockX, $blockY, $cellIdx) {
@@ -293,6 +292,14 @@ var Block = function () {
             this.y += 1;
             this.correction();
         }
+    }, {
+        key: "copyPosition",
+        value: function copyPosition(block) {
+            this.x = block.x;
+            this.y = block.y;
+            this.rotateIdx = block.rotateIdx;
+            this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
+        }
 
         // 영역 보정
 
@@ -311,8 +318,9 @@ var Block = function () {
                 rightOver = this.cells.reduce(function (p, c, i) {
                     return p && !(c !== 0 && _this.x + i % 4 === -1);
                 }, true);
-                // downOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.y + Math.floor(i / 4) >= rows), true);
-                console.log(downOver, this.y);
+                downOver = this.cells.reduce(function (p, c, i) {
+                    return p && !(c !== 0 && _this.y + Math.floor(i / 4) >= rows);
+                }, true);
                 if (!leftOver) this.x -= 1;
                 if (!rightOver) this.x += 1;
                 // if (!downOver) this.y -= 1;
@@ -349,6 +357,7 @@ var absCells = [];
 var canvas = void 0;
 var ctx = void 0;
 var block = void 0;
+var previewBlock = void 0;
 
 document.addEventListener("DOMContentLoaded", function () {
     console.log("ready");
@@ -374,7 +383,7 @@ function setup() {
         }
     }
 
-    block = new Block();
+    initBlock();
 }
 
 function addEventHandler() {
@@ -392,8 +401,12 @@ function addEventHandler() {
                 block.right();
                 maping();
                 e.preventDefault();break;
+            case "Space":
+                forceLand();
+                maping();
+                e.preventDefault();break;
             default:
-                console.log("not defiend event key");break;
+                console.log("not defiend event key : " + e.code);break;
         }
     });
 }
@@ -417,6 +430,8 @@ function draw() {
         }
     }
 
+    preview();
+
     setTimeout(draw, 40);
 }
 
@@ -432,16 +447,48 @@ function maping() {
     var cellImg = absCells.slice();
     for (var i = 0; i < block.cells.length; i += 1) {
         var mapCellIdx = getCellIdx(block.x, block.y, i);
-        cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
 
         if (block.cells[i] !== 0 && cellImg[mapCellIdx + cols] !== 0) stop = true;
+
+        if (mapCellIdx < cells.length) cellImg[mapCellIdx] = cellImg[mapCellIdx] || block.cells[i];
     }
     if (stop) {
         absCells = cellImg.slice();
         checkClear();
         initBlock();
+    } else {
+        cells = cellImg.slice();
     }
-    cells = cellImg.slice();
+}
+
+function preview() {
+    if (!previewBlock) return;
+    previewBlock.copyPosition(block);
+    var stop = false;
+    while (!stop) {
+        previewBlock.down();
+        for (var i = 0; i < previewBlock.cells.length; i += 1) {
+            var mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, i);
+            if (previewBlock.cells[i] !== 0 && absCells[mapCellIdx + cols] !== 0) stop = true;
+        }
+    }
+
+    for (var _i = 0; _i < previewBlock.cells.length; _i += 1) {
+        var _mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, _i);
+        if (previewBlock.cells[_i] !== 0) {
+            ctx.beginPath();
+            ctx.rect(_mapCellIdx % cols * scl, Math.floor(_mapCellIdx / cols) * scl, scl, scl);
+            ctx.strokeStyle = "#000";
+            ctx.fillStyle = "#ddd";
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+        }
+    }
+}
+
+function forceLand() {
+    block.copyPosition(previewBlock);
 }
 
 function checkClear() {
@@ -474,4 +521,5 @@ function getCellIdx($blockX, $blockY, $cellIdx) {
 
 function initBlock() {
     block = new Block();
+    previewBlock = new Block(block.x, block.y, block.blockType, block.rotateIdx);
 }
