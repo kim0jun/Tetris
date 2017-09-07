@@ -169,13 +169,13 @@ const BLOCK_TYPE = {
 
 class Block {
     constructor(x, y, blockType, rotateIdx) {
-        this.x = x || 0;
+        this.x = x || Math.floor(Math.random() * (cols - 4));
         this.y = y || 0;
         this.blockType = blockType || Math.floor(Math.random() * 7) + 1;
         this.rotateIdx = rotateIdx || 0;
         this.cells = BLOCK_TYPE[`TYPE${this.blockType}`][this.rotateIdx];
 
-        this.getCellIdx = ($blockX, $blockY, $cellIdx) =>  $blockX + ($blockY * cols) + (Math.floor($cellIdx / 4) * cols) + ($cellIdx % 4)
+        this.getCellIdx = ($blockX, $blockY, $cellIdx) =>  $blockX + ($blockY * cols) + (Math.floor($cellIdx / 4) * cols) + ($cellIdx % 4);
     }
 
     // 돌리고 -> 불가능하면 위치조정
@@ -213,11 +213,11 @@ class Block {
     correction() {
         let rightOver = false;
         let leftOver = false;
-        let downOver = true;
-        while (!rightOver || !leftOver || !downOver) {
+        // let downOver = false;
+        while (!rightOver || !leftOver) {
             leftOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === cols), true);
             rightOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === -1), true);
-            downOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.y + Math.floor(i / 4) >= rows), true);
+            // downOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.y + Math.floor(i / 4) >= rows), true);
             if (!leftOver) this.x -= 1;
             if (!rightOver) this.x += 1;
             // if (!downOver) this.y -= 1;
