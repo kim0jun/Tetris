@@ -223,7 +223,7 @@ var Block = function () {
         this.x = x || Math.floor(Math.random() * (cols - 4));
         this.y = y || 0;
         this.blockType = blockType || Math.floor(Math.random() * 7) + 1;
-        this.rotateIdx = rotateIdx || 0;
+        this.rotateIdx = rotateIdx || Math.floor(Math.random() * 4);
         this.cells = BLOCK_TYPE["TYPE" + this.blockType][this.rotateIdx];
 
         this.getCellIdx = function ($blockX, $blockY, $cellIdx) {
@@ -316,7 +316,7 @@ var Block = function () {
 var STAGE_WIDTH = 240;
 var STAGE_HEIGHT = 460;
 var scl = 20;
-var rows = STAGE_HEIGHT / scl;
+var rows = STAGE_HEIGHT / scl + 4;
 var cols = STAGE_WIDTH / scl;
 var cells = [];
 var absCells = [];
@@ -384,9 +384,9 @@ function draw() {
     ctx.fill();
 
     // 셀을 그린다 .
-    for (var y = 0; y < rows; y += 1) {
+    for (var y = 0; y < rows - 4; y += 1) {
         for (var x = 0; x < cols; x += 1) {
-            var cellType = cells[x + y * cols];
+            var cellType = cells[x + (y + 4) * cols];
             ctx.beginPath();
             ctx.rect(x * scl, y * scl, scl, scl);
             ctx.strokeStyle = cellType === 0 ? "#fff" : "#000";
@@ -428,6 +428,7 @@ function maping() {
     if (stop) {
         absCells = cells.slice();
         checkClear();
+        checkGameover();
         initBlock();
     } else {
         cells = cellImg.slice();
@@ -453,7 +454,7 @@ function preview() {
         var _mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, _i);
         if (previewBlock.cells[_i] !== 0 && cells[_mapCellIdx] === 0) {
             ctx.beginPath();
-            ctx.rect(_mapCellIdx % cols * scl, Math.floor(_mapCellIdx / cols) * scl, scl, scl);
+            ctx.rect(_mapCellIdx % cols * scl, (Math.floor(_mapCellIdx / cols) - 4) * scl, scl, scl);
             ctx.strokeStyle = "#000";
             ctx.fillStyle = "#777";
             ctx.stroke();
@@ -549,6 +550,27 @@ function checkClear() {
         absCells = blankArr.concat(absCells);
     }
 }
+
+function checkGameover() {
+    var isGameOver = false;
+    for (var y = 0; y < rows; y += 1) {
+        var isClear = true;
+        for (var x = 0; x < cols; x += 1) {
+            isClear = isClear && absCells[y * cols + x] !== 0;
+            if (absCells[y * cols + x] !== 0 && y * cols + x < 5 * cols) isGameOver = true;
+        }
+        if (isClear) clearArr.push(y);
+    }
+    if (isGameOver) {
+
+        absCells = absCells.map(function (v) {
+            return 0;
+        });
+        cells = absCells.slice();
+        console.log("game over");
+    }
+}
+
 /**
  * getCellIdx() returns a cell idx
  * get a index block cell in map cells

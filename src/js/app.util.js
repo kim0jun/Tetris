@@ -172,7 +172,7 @@ class Block {
         this.x = x || Math.floor(Math.random() * (cols - 4));
         this.y = y || 0;
         this.blockType = blockType || Math.floor(Math.random() * 7) + 1;
-        this.rotateIdx = rotateIdx || 0;
+        this.rotateIdx = rotateIdx || Math.floor(Math.random() * 4);
         this.cells = BLOCK_TYPE[`TYPE${this.blockType}`][this.rotateIdx];
 
         this.getCellIdx = ($blockX, $blockY, $cellIdx) =>  $blockX + ($blockY * cols) + (Math.floor($cellIdx / 4) * cols) + ($cellIdx % 4);

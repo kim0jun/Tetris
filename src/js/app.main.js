@@ -4,7 +4,7 @@
 const STAGE_WIDTH = 240;
 const STAGE_HEIGHT = 460;
 const scl = 20;
-const rows = STAGE_HEIGHT / scl;
+const rows = (STAGE_HEIGHT / scl) + 4;
 const cols = STAGE_WIDTH / scl;
 let cells = [];
 let absCells = [];
@@ -70,9 +70,9 @@ function draw() {
     ctx.fill();
 
     // 셀을 그린다 .
-    for (let y = 0; y < rows; y += 1) {
+    for (let y = 0; y < (rows - 4); y += 1) {
         for (let x = 0; x < cols; x += 1) {
-            const cellType = cells[x + (y * cols)];
+            const cellType = cells[x + ((y + 4) * cols)];
             ctx.beginPath();
             ctx.rect(x * scl, y * scl, scl, scl);
             ctx.strokeStyle = cellType === 0 ? "#fff" : "#000";
@@ -115,6 +115,7 @@ function maping() {
     if (stop) {
         absCells = cells.slice();
         checkClear();
+        checkGameover();
         initBlock();
     } else {
         cells = cellImg.slice();
@@ -141,7 +142,7 @@ function preview() {
         const mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, i);
         if (previewBlock.cells[i] !== 0 && cells[mapCellIdx] === 0) {
             ctx.beginPath();
-            ctx.rect((mapCellIdx % cols) * scl, Math.floor(mapCellIdx / cols) * scl, scl, scl);
+            ctx.rect((mapCellIdx % cols) * scl, (Math.floor(mapCellIdx / cols) - 4) * scl, scl, scl);
             ctx.strokeStyle = "#000";
             ctx.fillStyle = "#777";
             ctx.stroke();
@@ -238,6 +239,25 @@ function checkClear() {
         absCells = blankArr.concat(absCells);
     }
 }
+
+function checkGameover() {
+    let isGameOver = false;
+    for (let y = 0; y < rows; y += 1) {
+        let isClear = true;
+        for (let x = 0; x < cols; x += 1) {
+            isClear = isClear && absCells[(y * cols) + x] !== 0;
+            if (absCells[(y * cols) + x] !== 0 && (y * cols) + x < 5 * cols) isGameOver = true;
+        }
+        if (isClear) clearArr.push(y);
+    } 
+    if (isGameOver) {
+        
+        absCells = absCells.map(v => 0);
+        cells = absCells.slice();
+        console.log("game over");
+    }
+}
+
 /**
  * getCellIdx() returns a cell idx
  * get a index block cell in map cells
