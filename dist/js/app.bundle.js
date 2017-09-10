@@ -427,6 +427,8 @@ function draw() {
             ctx.stroke();
             ctx.fill();
             ctx.closePath();
+
+            if (cellType !== 0) drawDetail(x * scl, y * scl);
         }
     }
 
@@ -492,6 +494,54 @@ function preview() {
             ctx.closePath();
         }
     }
+}
+
+function drawDetail($xPostion, $yPostion) {
+    // 저장
+    ctx.save();
+    ctx.translate($xPostion, $yPostion);
+    // 위쪽면
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(scl, 0);
+    ctx.lineTo(scl * (8 / 10), scl * (2 / 10));
+    ctx.lineTo(scl * (2 / 10), scl * (2 / 10));
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.fill();
+    // 우측면
+    ctx.beginPath();
+    ctx.moveTo(scl, 0);
+    ctx.lineTo(scl, scl);
+    ctx.lineTo(scl * (8 / 10), scl * (8 / 10));
+    ctx.lineTo(scl * (8 / 10), scl * (2 / 10));
+    ctx.lineTo(scl, 0);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fill();
+    // 하측면
+    ctx.beginPath();
+    ctx.moveTo(scl, scl);
+    ctx.lineTo(0, scl);
+    ctx.lineTo(scl * (2 / 10), scl * (8 / 10));
+    ctx.lineTo(scl * (8 / 10), scl * (8 / 10));
+    ctx.lineTo(scl, scl);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fill();
+    // 왼쪽면
+    ctx.beginPath();
+    ctx.moveTo(0, scl);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(scl * (2 / 10), scl * (2 / 10));
+    ctx.lineTo(scl * (2 / 10), scl * (8 / 10));
+    ctx.lineTo(0, scl);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.fill();
+    // 복구
+    ctx.restore();
 }
 
 function forceLand() {
