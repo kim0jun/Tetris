@@ -315,11 +315,13 @@ var Block = function () {
 
 var STAGE_WIDTH = 240;
 var STAGE_HEIGHT = 460;
+var UI_WIDTH = 100;
 var scl = 20;
 var rows = STAGE_HEIGHT / scl + 4;
 var cols = STAGE_WIDTH / scl;
 var cells = [];
 var absCells = [];
+var nextBlocks = [];
 
 var canvas = void 0;
 var ctx = void 0;
@@ -327,7 +329,6 @@ var block = void 0;
 var previewBlock = void 0;
 
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("ready");
     setup();
     addEventHandler();
     update();
@@ -338,7 +339,7 @@ function setup() {
     canvas = document.createElement("canvas");
     ctx = canvas.getContext("2d");
 
-    canvas.setAttribute("width", STAGE_WIDTH);
+    canvas.setAttribute("width", STAGE_WIDTH + UI_WIDTH);
     canvas.setAttribute("height", STAGE_HEIGHT);
 
     document.querySelector("body").appendChild(canvas);
@@ -350,7 +351,10 @@ function setup() {
         }
     }
 
-    initBlock();
+    for (var i = 0; i < 5; i += 1) {
+        nextBlocks.push(new Block());
+    }
+    nextBlock();
 }
 
 function addEventHandler() {
@@ -380,6 +384,7 @@ function addEventHandler() {
 
 function draw() {
     ctx.fillStyle = "#000";
+    ctx.beginPath();
     ctx.rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     ctx.fill();
 
@@ -389,19 +394,67 @@ function draw() {
             var cellType = cells[x + (y + 4) * cols];
             ctx.beginPath();
             ctx.rect(x * scl, y * scl, scl, scl);
-            ctx.strokeStyle = cellType === 0 ? "#fff" : "#000";
             ctx.fillStyle = COLOR_TYPE[cellType];
-            ctx.stroke();
             ctx.fill();
             ctx.closePath();
-
-            if (cellType !== 0) drawDetail(x * scl, y * scl);
+            if (cellType !== 0) {
+                drawDetail(x * scl, y * scl);
+            } else {
+                ctx.strokeStyle = "rgba(255,255,255,0.6)";
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
         }
     }
 
     preview();
 
     setTimeout(draw, 40);
+}
+
+function uiDraw() {
+    ctx.beginPath();
+    ctx.font = "22px Verdana";
+    ctx.fillStyle = "#000";
+    ctx.fillText("NEXT", STAGE_WIDTH + 30, 30);
+    ctx.fill();
+    ctx.closePath();
+
+    ctx.fillStyle = "#000";
+    ctx.rect(STAGE_WIDTH + 20, 50, 80, 80);
+    ctx.rect(STAGE_WIDTH + 20, 150, 80, 300);
+    ctx.fill();
+
+    // 바로 다음 블럭
+    var left = 4;
+    var right = 0;
+    var top = 4;
+    var bottom = 0;
+    for (var i = 0; i < nextBlocks[0].cells.length; i += 1) {
+        var x = i % 4;
+        var y = Math.floor(i / 4);
+        if (nextBlocks[0].cells[i] !== 0) {
+            left = Math.min(left, x);
+            right = Math.max(right, x);
+            top = Math.min(top, y);
+            bottom = Math.max(bottom, y);
+        }
+    }
+
+    var width = right - left + 1;
+    var height = bottom - top + 1;
+    for (var _i = 0; _i < nextBlocks[0].cells.length; _i += 1) {
+        var _x = _i % 4 * scl + (STAGE_WIDTH + 20) + (4 - (width + left * 2)) / 2 * scl;
+        var _y = Math.floor(_i / 4) * scl + 50 + (4 - (height + top * 2)) / 2 * scl;
+        if (nextBlocks[0].cells[_i] !== 0) {
+            ctx.beginPath();
+            ctx.rect(_x, _y, scl, scl);
+            ctx.fillStyle = COLOR_TYPE[nextBlocks[0].cells[_i]];
+            ctx.fill();
+            ctx.closePath();
+            drawDetail(_x, _y);
+        }
+    }
 }
 
 function update() {
@@ -429,7 +482,7 @@ function maping() {
         absCells = cells.slice();
         checkClear();
         checkGameover();
-        initBlock();
+        nextBlock();
     } else {
         cells = cellImg.slice();
     }
@@ -450,9 +503,9 @@ function preview() {
     }
 
     // 내려가서 맵핑한다 ( 해당셀에 이미 블록이 차있다면 그리지 않는다.)
-    for (var _i = 0; _i < previewBlock.cells.length; _i += 1) {
-        var _mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, _i);
-        if (previewBlock.cells[_i] !== 0 && cells[_mapCellIdx] === 0) {
+    for (var _i2 = 0; _i2 < previewBlock.cells.length; _i2 += 1) {
+        var _mapCellIdx = getCellIdx(previewBlock.x, previewBlock.y, _i2);
+        if (previewBlock.cells[_i2] !== 0 && cells[_mapCellIdx] === 0) {
             ctx.beginPath();
             ctx.rect(_mapCellIdx % cols * scl, (Math.floor(_mapCellIdx / cols) - 4) * scl, scl, scl);
             ctx.strokeStyle = "#000";
@@ -554,15 +607,11 @@ function checkClear() {
 function checkGameover() {
     var isGameOver = false;
     for (var y = 0; y < rows; y += 1) {
-        var isClear = true;
         for (var x = 0; x < cols; x += 1) {
-            isClear = isClear && absCells[y * cols + x] !== 0;
             if (absCells[y * cols + x] !== 0 && y * cols + x < 5 * cols) isGameOver = true;
         }
-        if (isClear) clearArr.push(y);
     }
     if (isGameOver) {
-
         absCells = absCells.map(function (v) {
             return 0;
         });
@@ -585,7 +634,10 @@ function getCellIdx($blockX, $blockY, $cellIdx) {
     return idx;
 }
 
-function initBlock() {
-    block = new Block();
+function nextBlock() {
+    block = nextBlocks[0];
+    nextBlocks = nextBlocks.slice(1, nextBlocks.length);
+    nextBlocks.push(new Block());
     previewBlock = new Block(block.x, block.y, block.blockType, block.rotateIdx);
+    uiDraw();
 }

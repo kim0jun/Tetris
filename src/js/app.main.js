@@ -3,11 +3,13 @@
 
 const STAGE_WIDTH = 240;
 const STAGE_HEIGHT = 460;
+const UI_WIDTH = 100;
 const scl = 20;
 const rows = (STAGE_HEIGHT / scl) + 4;
 const cols = STAGE_WIDTH / scl;
 let cells = [];
 let absCells = [];
+let nextBlocks = [];
 
 
 let canvas;
@@ -16,7 +18,6 @@ let block;
 let previewBlock;
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("ready");
     setup();
     addEventHandler();
     update();
@@ -27,7 +28,7 @@ function setup() {
     canvas = document.createElement("canvas");
     ctx = canvas.getContext("2d");
 
-    canvas.setAttribute("width", STAGE_WIDTH);
+    canvas.setAttribute("width", STAGE_WIDTH + UI_WIDTH);
     canvas.setAttribute("height", STAGE_HEIGHT);
 
     document.querySelector("body").appendChild(canvas);
@@ -39,7 +40,10 @@ function setup() {
         }
     }
 
-    initBlock();
+    for (let i = 0; i < 5; i += 1) {
+        nextBlocks.push(new Block());
+    }
+    nextBlock();
 }
 
 function addEventHandler() {
@@ -66,6 +70,7 @@ function addEventHandler() {
 
 function draw() {
     ctx.fillStyle = "#000";
+    ctx.beginPath();
     ctx.rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     ctx.fill();
 
@@ -75,19 +80,68 @@ function draw() {
             const cellType = cells[x + ((y + 4) * cols)];
             ctx.beginPath();
             ctx.rect(x * scl, y * scl, scl, scl);
-            ctx.strokeStyle = cellType === 0 ? "#fff" : "#000";
             ctx.fillStyle = COLOR_TYPE[cellType];
-            ctx.stroke();
             ctx.fill();
             ctx.closePath();
-
-            if (cellType !== 0) drawDetail(x * scl, y * scl);
+            if (cellType !== 0) {
+                drawDetail(x * scl, y * scl);
+            } else {
+                ctx.strokeStyle = "rgba(255,255,255,0.6)";
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
         }
     }
 
     preview();
 
     setTimeout(draw, 40);
+}
+
+function uiDraw() {
+    ctx.beginPath();
+    ctx.font = "22px Verdana";
+    ctx.fillStyle = "#000";
+    ctx.fillText("NEXT", STAGE_WIDTH + 30, 30);
+    ctx.fill();
+    ctx.closePath();
+
+    ctx.fillStyle = "#000";
+    ctx.rect(STAGE_WIDTH + 20, 50, 80, 80);
+    ctx.rect(STAGE_WIDTH + 20, 150, 80, 300);
+    ctx.fill();
+
+
+    // 바로 다음 블럭
+    let left = 4;
+    let right = 0;
+    let top = 4;
+    let bottom = 0;
+    for (let i = 0; i < nextBlocks[0].cells.length; i += 1) {
+        const x = i % 4;
+        const y = Math.floor(i / 4);
+        if (nextBlocks[0].cells[i] !== 0) {
+            left = Math.min(left, x);
+            right = Math.max(right, x);
+            top = Math.min(top, y);
+            bottom = Math.max(bottom, y);
+        }
+    }
+
+    const width = (right - left) + 1;
+    const height = (bottom - top) + 1;
+    for (let i = 0; i < nextBlocks[0].cells.length; i += 1) {
+        const x = ((i % 4) * scl) + (STAGE_WIDTH + 20) + ((((4 - (width + (left * 2)))) / 2) * scl);
+        const y = ((Math.floor(i / 4)) * scl) + 50 + ((((4 - (height + (top * 2)))) / 2) * scl);
+        if (nextBlocks[0].cells[i] !== 0) {
+            ctx.beginPath();
+            ctx.rect(x, y, scl, scl);
+            ctx.fillStyle = COLOR_TYPE[nextBlocks[0].cells[i]];
+            ctx.fill();
+            ctx.closePath();
+            drawDetail(x, y);
+        }
+    }
 }
 
 function update() {
@@ -116,7 +170,7 @@ function maping() {
         absCells = cells.slice();
         checkClear();
         checkGameover();
-        initBlock();
+        nextBlock();
     } else {
         cells = cellImg.slice();
     }
@@ -243,15 +297,11 @@ function checkClear() {
 function checkGameover() {
     let isGameOver = false;
     for (let y = 0; y < rows; y += 1) {
-        let isClear = true;
         for (let x = 0; x < cols; x += 1) {
-            isClear = isClear && absCells[(y * cols) + x] !== 0;
             if (absCells[(y * cols) + x] !== 0 && (y * cols) + x < 5 * cols) isGameOver = true;
         }
-        if (isClear) clearArr.push(y);
-    } 
+    }
     if (isGameOver) {
-        
         absCells = absCells.map(v => 0);
         cells = absCells.slice();
         console.log("game over");
@@ -272,7 +322,10 @@ function getCellIdx($blockX, $blockY, $cellIdx) {
     return idx;
 }
 
-function initBlock() {
-    block = new Block();
+function nextBlock() {
+    block = nextBlocks[0];
+    nextBlocks = nextBlocks.slice(1, nextBlocks.length);
+    nextBlocks.push(new Block());
     previewBlock = new Block(block.x, block.y, block.blockType, block.rotateIdx);
+    uiDraw();
 }
