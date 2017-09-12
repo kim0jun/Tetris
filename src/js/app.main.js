@@ -128,11 +128,9 @@ function uiDraw() {
         }
     }
 
-    const width = (right - left) + 1;
-    const height = (bottom - top) + 1;
     for (let i = 0; i < nextBlocks[0].cells.length; i += 1) {
-        const x = ((i % 4) * scl) + (STAGE_WIDTH + 20) + ((((4 - (width + (left * 2)))) / 2) * scl);
-        const y = ((Math.floor(i / 4)) * scl) + 50 + ((((4 - (height + (top * 2)))) / 2) * scl);
+        const x = ((i % 4) * scl) + (STAGE_WIDTH + 20) + (((4 - (right + left + 1)) / 2) * scl);
+        const y = ((Math.floor(i / 4)) * scl) + 50 + (((4 - (bottom + top + 1)) / 2) * scl);
         if (nextBlocks[0].cells[i] !== 0) {
             ctx.beginPath();
             ctx.rect(x, y, scl, scl);
@@ -206,6 +204,14 @@ function preview() {
     }
 }
 
+/**
+ * drawDetail() draw block detail
+ * 블록에 입체감을 준다.
+ *
+ * @param {Number} $xPostion
+ * @param {Number} $yPostion
+ * @return void
+ */
 function drawDetail($xPostion, $yPostion) {
     // 저장
     ctx.save();

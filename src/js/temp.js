@@ -441,11 +441,9 @@ function uiDraw() {
         }
     }
 
-    var width = right - left + 1;
-    var height = bottom - top + 1;
     for (var _i = 0; _i < nextBlocks[0].cells.length; _i += 1) {
-        var _x = _i % 4 * scl + (STAGE_WIDTH + 20) + (4 - (width + left * 2)) / 2 * scl;
-        var _y = Math.floor(_i / 4) * scl + 50 + (4 - (height + top * 2)) / 2 * scl;
+        var _x = _i % 4 * scl + (STAGE_WIDTH + 20) + (4 - (right + left + 1)) / 2 * scl;
+        var _y = Math.floor(_i / 4) * scl + 50 + (4 - (bottom + top + 1)) / 2 * scl;
         if (nextBlocks[0].cells[_i] !== 0) {
             ctx.beginPath();
             ctx.rect(_x, _y, scl, scl);
@@ -517,6 +515,14 @@ function preview() {
     }
 }
 
+/**
+ * drawDetail() draw block detail
+ * 블록에 입체감을 준다.
+ *
+ * @param {Number} $xPostion
+ * @param {Number} $yPostion
+ * @return void
+ */
 function drawDetail($xPostion, $yPostion) {
     // 저장
     ctx.save();
