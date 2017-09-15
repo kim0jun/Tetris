@@ -213,14 +213,11 @@ class Block {
     correction() {
         let rightOver = false;
         let leftOver = false;
-        // let downOver = false;
         while (!rightOver || !leftOver) {
-            leftOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === cols), true);
-            rightOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) === -1), true);
-            // downOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.y + Math.floor(i / 4) >= rows), true);
+            leftOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) >= cols), true);
+            rightOver = this.cells.reduce((p, c, i) => p && !(c !== 0 && this.x + (i % 4) <= -1), true);
             if (!leftOver) this.x -= 1;
             if (!rightOver) this.x += 1;
-            // if (!downOver) this.y -= 1;
         }
     }
 
